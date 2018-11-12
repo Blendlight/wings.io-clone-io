@@ -1,6 +1,6 @@
 const bulletRadius = 5;
 
-function Bullet(x, y, xv,yv, life=100){
+function Bullet(x=0, y=0, xv=0,yv=0, life=100){
     this.position = new Vec2d(x,y);
     this.prevPosition = new Vec2d(x,y);
     this.velocity = new Vec2d(xv,yv);
@@ -24,9 +24,6 @@ function Bullet(x, y, xv,yv, life=100){
             ctx.strokeStyle = 'orange';
             ctx.lineWidth = 4;
             let p2 = this.position.subtract(this.velocity.unit(20));
-            let p3 = p2.clone();
-            p3.x += 50;
-            p3.y -= 3;
             draw_line(this.position.x, this.position.y, p2.x, p2.y);
             // draw_circle(this.position.x, this.position.y, bulletRadius);
         }

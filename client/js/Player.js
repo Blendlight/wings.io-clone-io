@@ -24,6 +24,7 @@ function Player(x=0, y=0, id=random(100,400), name='')
     this.health = 100;
     this.name = name;
     this.draw_sprite = true;
+    this.score = 0;
     
 
     this.draw = function(){
