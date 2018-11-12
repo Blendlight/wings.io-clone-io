@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body{
+            background: black;
+            margin:0;
+            padding:0;
+        }
+        canvas{
+            background: white;
+            /* cursor:none; */
+        }
+
+        #game{
+            width: fit-content;
+            height: fit-content;
+            position: relative;
+        }
+
+        #overlay{
+            width: 100%;
+            height: 100%;
+            background:#47c1c5b5;
+            position: absolute;
+            top:0;
+            left: 0;
+            display: none;
+        }
+        
+        #overlay.active{
+            display: block;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="game">
+        <canvas></canvas>
+        <div id="overlay">
+            <form id="startForm">
+                <input id="name" name="name" />
+                <input type="submit" value="Play" />
+            </form>
+            <div id="overlayMessage"></div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/mPhysics.js"></script>
+    <script src="resource_loader.js"></script>
+    <script src="js/functions.js"></script>
+    <script src="js/Particle.js"></script>
+    <script src="js/Bullet.js"></script>
+    <script src="js/Player.js"></script>
+    <script src="js/Vector2d.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
