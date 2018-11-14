@@ -74,6 +74,10 @@ Vec2d.fromArray = function (arr) {
     return new Vec2d(arr[0] || 0, arr[1] || 0);
 };
 
+Vec2d.fromAngle = function (angle) {
+    return new Vec2d(Math.cos(angle), Math.sin(angle));
+};
+
 /**
 * Creates a new instance from an object
 *
@@ -793,11 +797,11 @@ function radian2degrees (rad) {
     return rad * 180 / Math.PI;
 }
 
-function degrees2radian (deg) {
+function degrees2radian  (deg) {
     return deg / 180 / Math.PI;
 }
 
-function lerp(x1, x2, amount)
+function lerp (x1, x2, amount)
 {
     return  (1 - amount) * x1 + amount * x2;
 }

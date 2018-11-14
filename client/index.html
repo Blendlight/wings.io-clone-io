@@ -37,8 +37,14 @@
         }
         
         #scoreBoard{
-            background: white;
-            padding: 100px;
+            position: absolute;
+            list-style: none;
+            background: rgba(255,255,255,.4);
+            padding: 10px;
+            right: 10px;
+            top:10px;
+            min-width: 100px;
+            user-select: none;
         }
     </style>
 </head>
@@ -53,9 +59,10 @@
             </form>
             <div id="overlayMessage"></div>
         </div>
+        <ul id="scoreBoard">
+        </ul>
     </div>
-    <ul id="scoreBoard">
-    </ul>
+    
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/mPhysics.js"></script>

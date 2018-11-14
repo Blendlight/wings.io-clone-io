@@ -177,7 +177,7 @@ function Player(x=0, y=0, id=random(100,400), name='')
                     //change current direction to new direction but use lerp
                     this.direction = this.direction.lerp(diff2,
                         //this is random test formula ;-0
-                        1/Math.min(12, Math.max(diff.length()+1, 10))
+                        .2
                         ).unit(1);
                         // return;
                         
@@ -222,7 +222,7 @@ function Player(x=0, y=0, id=random(100,400), name='')
                         
                         
                         
-                        //skip aboce use below
+                        //skip above use below
                         if(false){
                             // if(mouse_clicked == true)
                             let diff = mouse.subtract(this.position);

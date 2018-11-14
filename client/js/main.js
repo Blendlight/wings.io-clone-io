@@ -23,6 +23,7 @@ startForm.addEventListener('submit', function(evt){
     localStorage.setItem('username', name)
     socket.emit('play', name);
     canvasOverlay.classList.remove('active');
+    scaleFact = .1;
 });
 
 
@@ -39,8 +40,8 @@ startForm.addEventListener('submit', function(evt){
 
 
 
-let width = canvas.width = 480;
-let height = canvas.height = width*3/4;
+let width = canvas.width = window.innerWidth-20;
+let height = canvas.height = window.innerHeight-20;
 let name = '';
 
 let room = new Vec2d(5000, 5000);
@@ -62,6 +63,7 @@ let players = {};
 let DefaultRadius = 20;
 
 let scaleFact = 1;
+let scaleFactTarget = .3;
 
 let bullets = [];
 
@@ -102,13 +104,15 @@ socket.on('heartBeat', ({playersData, sgameTimer, bulletsData})=>{
             //we only need to update health here
             player.health = socketPlayer.health;
             player.score  = socketPlayer.score;
+            // player.position = Vec2d.fromObject(socketPlayer.position);
+            // player.direction = Vec2d.fromObject(socketPlayer.direction);
             // playing = socketPlayer.playing;
-            console.log(socketPlayer.playing);
+            // console.log(socketPlayer.playing);
             // if(!socketPlayer.playing)
             // {
             //     startPage();
             // }
-
+            
             continue;
         }
         
@@ -179,14 +183,14 @@ socket.on('heartBeat', ({playersData, sgameTimer, bulletsData})=>{
         this.damage = 6.8;
         this.player = null;
         */
-
+        
         bullet.position = Vec2d.fromObject(socketBullet.position);
         bullet.velocity = Vec2d.fromObject(socketBullet.velocity);
         bullet.prevPosition = Vec2d.fromObject(socketBullet.prevPosition);
         bullet.nextPosition = Vec2d.fromObject(socketBullet.nextPosition);
         bullet.life = socketBullet.life;
         bullet.damage = socketBullet.damage;
-
+        
         bullets.push(bullet);
     }
     
@@ -201,7 +205,7 @@ socket.on('deletePlayer', (id)=>{
         startPage();
         return;
     }
-
+    
     if(players[id])
     {
         delete players[id];
@@ -211,11 +215,11 @@ socket.on('deletePlayer', (id)=>{
 socket.on('start', ({sgameTimer, socketPlayer})=>{
     socketTimer = sgameTimer;
     gameTimer = sgameTimer;
-
+    
     //set players to socket player
-    player.position = Vec2d.fromObject(socketPlayer.position);
+    // player.position = Vec2d.fromObject(socketPlayer.position);
     player.health = socketPlayer.health;
-
+    
     start();
 });
 
@@ -312,10 +316,14 @@ function update()
     player.name = name;
     gameTimer++;
     
+    
+    
     if(Math.abs(gameTimer-socketTimer) >= 3)
     {
         // return;
     }
+    
+    scaleFact = lerp(scaleFact, scaleFactTarget, .1);
     
     gameTimer = socketTimer;
     
@@ -331,8 +339,8 @@ function update()
         socket.emit('shoot', true);
     }
     
-    let tx = width/2-player.position.x;
-    let ty = height/2-player.position.y;
+    let tx = player.position.x;
+    let ty = player.position.y;
     
     if(false){
         viewPort.x = lerp(viewPort.x, tx, 1/10);
@@ -342,247 +350,272 @@ function update()
         viewPort.y = ty;
     }
     
-    mouse.set(mouseTarget.x - viewPort.x  , mouseTarget.y - viewPort.y);
-    
-    player.update();
-    
-    for(let id in players)
-    {
-        let otherPlayer = players[id];
-        otherPlayer.update();
-    }
-    
-    /*  
-    for(let otherPlayer of players)
-    {
-        otherPlayer.update();
-        let circle1 = new Circle(player.position, player.r);
-        let circle2 = new Circle(otherPlayer.position, otherPlayer.r);
-        
-        if(circleCircleIntersect(circle1, circle2))
-        {
-            //sap
-            let diff = player.position.subtract(otherPlayer.position);
-            let dir = diff.unit();
-            let dist = diff.length();
-            let shak = diff.scale(.5);
-            
-            player.position = player.position.add(shak);
-            player.direction = player.direction.add(diff.unit(2));
-            player.velocity = player.velocity.add(shak.scale(.3));
-            
-            otherPlayer.position = otherPlayer.position.subtract(shak);
-            otherPlayer.direction = otherPlayer.direction.add(diff.unit(2));
-            otherPlayer.velocity = otherPlayer.velocity.subtract(shak);
-            
-            player.health -= 20;
-            otherPlayer.health -= 20;
-            
-        }
-        
-        if(otherPlayer.health<=0){
-            players.splice(players.indexOf(otherPlayer), 1);
-        }
+    // mouse.set(mouseTarget.x+viewPort.x-width/2   , mouseTarget.y+viewPort.y-height/2);
+    mouse.set(
+        (mouseTarget.x/scaleFact)+(viewPort.x)-(width/2/scaleFact),
+        (mouseTarget.y/scaleFact)+(viewPort.y)-(height/2/scaleFact),
+        // mouseTarget.y/scaleFact + viewPort.y-height
+        // mouseTarget.y
+        );
+        player.update();
         
         
-    }
-    */
-    /* for(let i=0;i<bullets.length;i++)
-    {
-        let bullet = bullets[i];
-        bullet.update();
-        if(bullet.life <= 1)
-        {
-            bullets.splice(i,1);
-            continue;
-        }
-        
-        //check for collision with other players
-        
-        for(let j=0;j<players.length;j++)
-        {
-            let otherPlayer = players[j];
-            
-            let circle = new Circle(otherPlayer.position, otherPlayer.r);
-            let line = new Line(bullet.prevPosition, 
-                bullet.position);
-                // line.draw();
-                
-                let intersect = lineCircleIntersect(line, circle);
-                if(intersect.intersect>=1 && bullet.damage > 0)
-                {
-                    //decreased player health
-                    otherPlayer.health -= bullet.damage;
-                    
-                    //delete bullet
-                    //but we can use it for hit effect
-                    //i will use trick to damage 
-                    //if damage 0 then bullet is hit haha looking stupid
-                    // bullets.splice(i, 1);
-                    bullet.damage = 0;
-                    bullet.velocity = bullet.velocity.invert().unit(5);
-                    bullet.life = 1;
-                    
-                    // circle.draw(DRAW_METHODS.fill);
-                }
-                
-            }
-            
-            
-        }
-        */ 
-        
-        updateScoreBoard();
-    } 
-    
-    function draw()
-    {
-        ctx.clearRect(0, 0, width, height);
-        //save current state of canvas transform
-        ctx.fillStyle = 'orange';
-        ctx.font = "20px sans-serif";
-        ctx.fillText(gameTimer,10,20);
-        
-        
-        let paralaxFactor = 1/bgTile.distance;
-        let xoffset = viewPort.x*paralaxFactor;
-        let yoffset = viewPort.y*paralaxFactor;
-        for(let i = -bgTile.width;i<width+bgTile.width;i+=bgTile.width)
-        {
-            for(let j=-bgTile.height;j<height+bgTile.height;j+=bgTile.height)
-            {
-                
-                let x = i+xoffset%bgTile.width;
-                let y = j+yoffset%bgTile.height;
-                ctx.drawImage(bgTile.img, x, y, bgTile.width, bgTile.height);
-            }
-        }
-        
+        /*
+        //scale view if player is standing
 
-        
-        
-        /* 
-        if(player.position.x < width/2)
+        if(player.position.subtract(mouse).length()<=minSpeedR)
         {
-            tx = 0;
-        }
-        if(player.position.y < height/2)
-        {
-            ty = 0;
+            scaleFactTarget = 1;
+        }else{
+            scaleFactTarget = .5;
         }
         */
         
-        ctx.save();
-        ctx.scale(scaleFact, scaleFact);
-        ctx.translate(viewPort.x+(width-width*scaleFact), viewPort.y+(height-height*scaleFact));
         
-        
-        
-        
-        ctx.strokeStyle = 'red';
-        ctx.strokeRect(0,0,room.x, room.y);
-        
-        
-        
-        
-        player.draw();
-        
-        ctx.strokeStyle = 'black';
-        draw_circle(player.position.x, player.position.y, minSpeedR, DRAW_METHODS.stroke);
-        
-        for(otherId in players)
+        for(let id in players)
         {
-            let otherPlayer = players[otherId];
-            otherPlayer.draw();
+            let otherPlayer = players[id];
+            otherPlayer.update();
         }
         
-        
-        draw_circle(mouse.x, mouse.y, 5);
-        
-        for(bullet of bullets)
+        /*  
+        for(let otherPlayer of players)
         {
-            bullet.draw();
+            otherPlayer.update();
+            let circle1 = new Circle(player.position, player.r);
+            let circle2 = new Circle(otherPlayer.position, otherPlayer.r);
+            
+            if(circleCircleIntersect(circle1, circle2))
+            {
+                //sap
+                let diff = player.position.subtract(otherPlayer.position);
+                let dir = diff.unit();
+                let dist = diff.length();
+                let shak = diff.scale(.5);
+                
+                player.position = player.position.add(shak);
+                player.direction = player.direction.add(diff.unit(2));
+                player.velocity = player.velocity.add(shak.scale(.3));
+                
+                otherPlayer.position = otherPlayer.position.subtract(shak);
+                otherPlayer.direction = otherPlayer.direction.add(diff.unit(2));
+                otherPlayer.velocity = otherPlayer.velocity.subtract(shak);
+                
+                player.health -= 20;
+                otherPlayer.health -= 20;
+                
+            }
+            
+            if(otherPlayer.health<=0){
+                players.splice(players.indexOf(otherPlayer), 1);
+            }
+            
+            
         }
-
-        // for(bid in bullets)
-        // {
-        //     let bullet = bullets[id];
-        //     console.log(bullet);
-        // }
-        
-        ctx.restore();
-    }
-    
-    function calling()
-    {
-        update();
-        
-        /* this.position = new Vec2d(x, y);
-        this.size = new Vec2d(100,40);
-        this.r = this.size.x/2;
-        this.id = id;
-        this.direction = new Vec2d(1,0);
-        this.velocity = new Vec2d(0,0);
-        this.speed = 0;
-        this.health = 100;
-        this.name = name; */
-        
-        let updateData = {
-            position:player.position,
-            direction:player.direction,
-            velocity:player.velocity,
-            speed:player.speed
-        };
-        
-        socket.emit('updateMe', updateData);
-        
-        
-        draw();
-    }
-    
-    function updateScoreBoard()
-    {
-        scoreBoard.innerHTML = "";
-        // let scores = [];
-        // scores.push(player);
-        scoreBoard.innerHTML += `<li>${player.name}: ${player.score}</li>`;
-        for(id in players)
+        */
+        /* for(let i=0;i<bullets.length;i++)
         {
-            let p = players[id];
-            scoreBoard.innerHTML += `<li>${p.name}: ${p.score}</li>`;
-            // scores.push(players[id]);
+            let bullet = bullets[i];
+            bullet.update();
+            if(bullet.life <= 1)
+            {
+                bullets.splice(i,1);
+                continue;
+            }
+            
+            //check for collision with other players
+            
+            for(let j=0;j<players.length;j++)
+            {
+                let otherPlayer = players[j];
+                
+                let circle = new Circle(otherPlayer.position, otherPlayer.r);
+                let line = new Line(bullet.prevPosition, 
+                    bullet.position);
+                    // line.draw();
+                    
+                    let intersect = lineCircleIntersect(line, circle);
+                    if(intersect.intersect>=1 && bullet.damage > 0)
+                    {
+                        //decreased player health
+                        otherPlayer.health -= bullet.damage;
+                        
+                        //delete bullet
+                        //but we can use it for hit effect
+                        //i will use trick to damage 
+                        //if damage 0 then bullet is hit haha looking stupid
+                        // bullets.splice(i, 1);
+                        bullet.damage = 0;
+                        bullet.velocity = bullet.velocity.invert().unit(5);
+                        bullet.life = 1;
+                        
+                        // circle.draw(DRAW_METHODS.fill);
+                    }
+                    
+                }
+                
+                
+            }
+            */ 
+            
+            updateScoreBoard();
+        } 
+        
+        function draw()
+        {
+            
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            //save current state of canvas transform
+            ctx.fillStyle = 'orange';
+            ctx.font = "20px sans-serif";
+            ctx.fillText(gameTimer,10,20);
+            
+            
+            let paralaxFactor = 1/bgTile.distance;
+            let xoffset = -viewPort.x*paralaxFactor;
+            let yoffset = -viewPort.y*paralaxFactor;
+            for(let i = -bgTile.width;i<width+bgTile.width;i+=bgTile.width)
+            {
+                for(let j=-bgTile.height;j<height+bgTile.height;j+=bgTile.height)
+                {
+                    
+                    let x = i+xoffset%bgTile.width;
+                    let y = j+yoffset%bgTile.height;
+                    ctx.drawImage(bgTile.img, x, y, bgTile.width, bgTile.height);
+                }
+            }
+            
+            
+            
+            
+            /* 
+            if(player.position.x < width/2)
+            {
+                tx = 0;
+            }
+            if(player.position.y < height/2)
+            {
+                ty = 0;
+            }
+            */
+            
+            ctx.save();
+            
+            // ctx.translate(viewPort.x*scaleFact, viewPort.y*scaleFact);
+            ctx.translate(width/2, height/2);
+            ctx.scale(scaleFact, scaleFact);
+            ctx.translate(-viewPort.x, -viewPort.y);
+            // ctx.translate(viewPort.x+(width/2-width/2*scaleFact), viewPort.y+(height/2-height/2*scaleFact));
+            
+            
+            
+            
+            ctx.strokeStyle = 'red';
+            ctx.strokeRect(0,0,room.x, room.y);
+            
+            
+            
+            
+            player.draw();
+            
+            ctx.strokeStyle = 'black';
+            draw_circle(player.position.x, player.position.y, minSpeedR, DRAW_METHODS.stroke);
+            
+            for(otherId in players)
+            {
+                let otherPlayer = players[otherId];
+                otherPlayer.draw();
+            }
+            
+            
+            draw_circle(mouse.x, mouse.y, 5/scaleFact);
+            
+            for(bullet of bullets)
+            {
+                bullet.draw();
+            }
+            
+            // for(bid in bullets)
+            // {
+            //     let bullet = bullets[id];
+            //     console.log(bullet);
+            // }
+            
+            ctx.restore();
         }
-
-        // for(player in scores)
-        // {
-        //     scoreBoard.innerHTML += '';
-        // }
-
-
-    }
-    
-    // Other events
-    
-    window.onmousedown = function(evt){
-        mouse_clicked = true;
         
-        
-        
-    }
-    
-    window.onmouseup = function(evt){
-        mouse_clicked = false;
-    }
-    
-    window.onmousemove = function(evt)
-    {
-        // mouseTarget.set(evt.clientX, evt.clientY);
-        //comment this to see effect
-        // mouse.set(evt.clientX, evt.clientY);
-        mouseTarget.set(
-            evt.clientX/scaleFact - (width-width*scaleFact) /* - viewPort.x */,
-            evt.clientY/scaleFact - (height-height*scaleFact) /* - viewPort.y */
-            );
+        function calling()
+        {
+            update();
+            
+            /* this.position = new Vec2d(x, y);
+            this.size = new Vec2d(100,40);
+            this.r = this.size.x/2;
+            this.id = id;
+            this.direction = new Vec2d(1,0);
+            this.velocity = new Vec2d(0,0);
+            this.speed = 0;
+            this.health = 100;
+            this.name = name; */
+            
+            let updateData = {
+                position:player.position,
+                direction:player.direction,
+                velocity:player.velocity,
+                speed:player.speed
+            };
+            
+            socket.emit('updateMe', updateData);
+            
+            
+            draw();
         }
         
+        function updateScoreBoard()
+        {
+            scoreBoard.innerHTML = "";
+            // let scores = [];
+            // scores.push(player);
+            scoreBoard.innerHTML += `<li>${player.name}: ${player.score}</li>`;
+            for(id in players)
+            {
+                let p = players[id];
+                scoreBoard.innerHTML += `<li>${p.name}: ${p.score}</li>`;
+                // scores.push(players[id]);
+            }
+            
+            // for(player in scores)
+            // {
+            //     scoreBoard.innerHTML += '';
+            // }
+            
+            
+        }
         
+        // Other events
+        
+        window.onmousedown = function(evt){
+            mouse_clicked = true;
+            
+            
+            
+        }
+        
+        window.onmouseup = function(evt){
+            mouse_clicked = false;
+        }
+        
+        window.onmousemove = function(evt)
+        {
+            // mouseTarget.set(evt.clientX, evt.clientY);
+            //comment this to see effect
+            // mouse.set(evt.clientX, evt.clientY);
+            mouseTarget.set(
+                evt.clientX, /* - viewPort.x */
+                evt.clientY /* - viewPort.y */
+                );
+            }
+            
+            

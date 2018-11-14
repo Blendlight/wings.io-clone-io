@@ -1,6 +1,6 @@
 if(typeof module != 'undefined')
 {
-    Vec2d = require('./Vector2d');
+    vec2dModule  = require('./Vector2d');
 }
 
 

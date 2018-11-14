@@ -18,7 +18,9 @@ function Bullet(x=0, y=0, xv=0,yv=0, life=100){
     this.draw = function(){
         if(this.damage>0){
             ctx.fillStyle = 'gray';
-            draw_circle(this.position.x, this.position.y, bulletRadius);
+            // draw_circle(this.position.x, this.position.y, bulletRadius);
+            ctx.lineWidth = 4;
+            draw_line(this.position.x, this.position.y, this.prevPosition.x, this.prevPosition.y);
         }else{
             ctx.fillStyle = 'orange';
             ctx.strokeStyle = 'orange';
