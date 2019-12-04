@@ -1,9 +1,3 @@
-if(typeof module != 'undefined')
-{
-    module.exports = Vec2d;
-}
-
-
 /**
 * # Vec2d - A JavaScript 2D vector class with methods for common vector operations
 */
@@ -804,4 +798,10 @@ function degrees2radian  (deg) {
 function lerp (x1, x2, amount)
 {
     return  (1 - amount) * x1 + amount * x2;
+}
+
+
+if(typeof module != 'undefined')
+{
+    module.exports = Vec2d;
 }
